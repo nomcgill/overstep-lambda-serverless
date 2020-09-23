@@ -72,6 +72,27 @@ functions: # add 4 functions for CRUD
          path: database/{id} # path will be domain.name.com/dev/notes/1
          method: delete
          cors: true
+  findHero:
+    handler: handler.findHero
+    events:
+      - http:
+          path: hero/{id} # path will be domain.name.com/dev/notes/1
+          method: get
+          cors: true
+  createHero:
+    handler: handler.createHero
+    events:
+      - http:
+          path: hero
+          method: post
+          cors: true
+  saveHeroById:
+    handler: handler.saveHeroById # path will be domain.name.com/dev/notes/1
+    events:
+     - http:
+         path: hero/{id}
+         method: put
+         cors: true
 
 plugins:
 - serverless-offline # adding the plugin to be able to run the offline emulation

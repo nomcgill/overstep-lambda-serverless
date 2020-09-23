@@ -22,4 +22,11 @@ module.exports = connectToDatabase = (Database) => {
           isConnected = db.connections[0].readyState;
         });
   }
+  if (Database === 'heroes'){
+    console.log('=> using new database connection');
+    return mongoose.connect(process.env.HEROESDB, { useUnifiedTopology: true })
+      .then(db => { 
+        isConnected = db.connections[0].readyState;
+      });
+}
 };

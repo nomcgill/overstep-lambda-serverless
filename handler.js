@@ -6,11 +6,12 @@ require('dotenv').config({ path: './database.env'})
 
 const connectToDatabase = require('./db');
 const Note = require('./models/Note');
-const Database = require('./models/Database')
+const Database = require('./models/Database');
+const Heroes = require('./models/Heroes');
 
 // https://hackernoon.com/building-a-serverless-rest-api-with-node-js-and-mongodb-2e0ed0638f47
 
-// EXAMPLE EXAMPLE EXAMPLE
+// EXAMPLE EXAMPLE EXAMPLE EXAMPLE EXAMPLE EXAMPLE EXAMPLE EXAMPLE
 module.exports.create = (event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
 
@@ -28,6 +29,8 @@ module.exports.create = (event, context, callback) => {
         }));
     });
   };
+
+// DATABASE API BELOW //////////////////////////////////////////
 
   // GETALL DATABASE
   module.exports.getDatabase = (event, context, callback) => {
@@ -62,7 +65,9 @@ module.exports.createDatabase = (event, context, callback) => {
         .then(note => callback(null, {
           headers: {
             'Access-Control-Allow-Origin': '*',
+            "Access-Control-Allow-Headers" : "Content-Type",
             'Access-Control-Allow-Credentials': true,
+            "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PUT"
           },
           statusCode: 200,
           body: JSON.stringify(note)
@@ -122,15 +127,46 @@ module.exports.deleteFromDatabase = (event, context, callback) => {
     });
 };
 
-module.exports.getOne = (event, context, callback) => {
+
+// HEROES API BELOW ////////////////////////////////////////////////////////////
+
+// PUT. Find Hero by ID and update
+module.exports.saveHeroById = (event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
 
-  connectToDatabase()
+  connectToDatabase("heroes")
     .then(() => {
-      Note.findById(event.pathParameters.id)
+      Heroes.findByIdAndUpdate(event.pathParameters.id, JSON.parse(event.body), { new: true })
         .then(note => callback(null, {
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Credentials': true,
+          },
           statusCode: 200,
           body: JSON.stringify(note)
+        }))
+        .catch(err => callback(null, {
+          statusCode: err.statusCode || 500,
+          headers: { 'Content-Type': 'text/plain' },
+          body: 'Could not fetch the notes.'
+        }));
+    });
+};
+
+// GET one Hero by ID
+module.exports.findHero = (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  connectToDatabase("heroes")
+    .then(() => {
+      Heroes.findById(event.pathParameters.id)
+        .then(note => callback(null, {
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Credentials': true,
+            },
+            statusCode: 200,
+            body: JSON.stringify(note)
         }))
         .catch(err => callback(null, {
           statusCode: err.statusCode || 500,
@@ -140,56 +176,25 @@ module.exports.getOne = (event, context, callback) => {
     });
 };
 
-module.exports.getAll = (event, context, callback) => {
+// POST. Save one hero.
+module.exports.createHero = (event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
 
-  connectToDatabase()
+  connectToDatabase("heroes")
     .then(() => {
-      Note.find()
-        .then(notes => callback(null, {
-          statusCode: 200,
-          body: JSON.stringify(notes)
-        }))
-        .catch(err => callback(null, {
-          statusCode: err.statusCode || 500,
-          headers: { 'Content-Type': 'text/plain' },
-          body: 'Could not fetch the notes.'
-        }))
-    });
-};
-
-module.exports.update = (event, context, callback) => {
-  context.callbackWaitsForEmptyEventLoop = false;
-
-  connectToDatabase()
-    .then(() => {
-      Note.findByIdAndUpdate(event.pathParameters.id, JSON.parse(event.body), { new: true })
+      Heroes.create(JSON.parse(event.body))
         .then(note => callback(null, {
-          statusCode: 200,
-          body: JSON.stringify(note)
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              "Access-Control-Allow-Credentials" : true // Required for cookies, authorization headers with HTTPS 
+            },
+            statusCode: 200,
+            body: JSON.stringify(note)
         }))
         .catch(err => callback(null, {
           statusCode: err.statusCode || 500,
           headers: { 'Content-Type': 'text/plain' },
-          body: 'Could not fetch the notes.'
-        }));
-    });
-};
-
-module.exports.delete = (event, context, callback) => {
-  context.callbackWaitsForEmptyEventLoop = false;
-
-  connectToDatabase()
-    .then(() => {
-      Note.findByIdAndRemove(event.pathParameters.id)
-        .then(note => callback(null, {
-          statusCode: 200,
-          body: JSON.stringify({ message: 'Removed note with id: ' + note._id, note: note })
-        }))
-        .catch(err => callback(null, {
-          statusCode: err.statusCode || 500,
-          headers: { 'Content-Type': 'text/plain' },
-          body: 'Could not fetch the notes.'
+          body: 'Could not create the note.'
         }));
     });
 };
